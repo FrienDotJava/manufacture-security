@@ -1,0 +1,2 @@
+FROM MFDoom/deepseek-coder-v2-tool-calling
+PARAMETER num_predict 2048

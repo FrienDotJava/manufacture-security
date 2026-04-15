@@ -1,16 +1,17 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from typing import Dict, Any, List
+from typing import Optional, List
 import requests
 from context import NODE_RED_AUDITOR_INSTRUCTIONS, get_analysis_prompt
 from openai import AsyncOpenAI
-from agents import Agent, Runner, OpenAIChatCompletionsModel
+from agents import Agent, Runner, OpenAIChatCompletionsModel, ModelSettings
 from mcp_server import create_nodered_server
 
 app = FastAPI(title="Node-RED Shadow Agent API")
 
 MCP_URL = "http://localhost:8001/tools/fetch_active_flow"
 OLLAMA_URL = "http://localhost:11434/api/chat"
+OLLAMA_MODEL = 'deepseek-auditor'
 
 
 class SecurityIssue(BaseModel):
@@ -18,16 +19,18 @@ class SecurityIssue(BaseModel):
     description: str = Field(
         description="Detailed description of the security issue and its potential impact"
     )
-    node: str = Field(
-        description="The specific vulnerable node that demonstrates the issue"
+    node_id: str = Field(
+        description="The EXACT 'id' string of the specific vulnerable node from the JSON flow (e.g., '10bdf115b9a4e47d'). Do not use generic names."
     )
     fix: str = Field(description="Recommended code fix or mitigation strategy")
-    cvss_score: float = Field(description="CVSS score from 0.0 to 10.0 representing severity")
+    cvss_score: float = Field(
+        description="CVSS score (0.1 to 10.0) for software vulnerabilities. Use exactly 0.0 for architectural or operational logic flaws."
+    )
     severity: str = Field(description="Severity level: critical, high, medium, or low")
 
 
 class SecurityReport(BaseModel):
-    summary: str = Field(description="Executive summary of the security analysis")
+    summary: str = Field(description="A strict, 1-sentence executive summary. DO NOT list issues here. Save them for the issues array.")
     issues: List[SecurityIssue] = Field(description="List of identified security vulnerabilities")
 
 
@@ -37,9 +40,10 @@ ollama_client = AsyncOpenAI(
 )
 
 local_model = OpenAIChatCompletionsModel(
-    model='deepseek-coder-v2', 
+    model=OLLAMA_MODEL, 
     openai_client=ollama_client
 )
+
 
 def create_auditor_agent(nodered_server) -> Agent:
     return Agent(
@@ -47,26 +51,26 @@ def create_auditor_agent(nodered_server) -> Agent:
         instructions=NODE_RED_AUDITOR_INSTRUCTIONS,
         model=local_model,
         mcp_servers=[nodered_server],
-        output_type=SecurityReport
+        output_type=SecurityReport,
+        model_settings=ModelSettings(
+            max_tokens=2048,
+            tool_choice="fetch_active_flow",
+            parallel_tool_calls=False
+        )
     )
-
-
-def get_flow_from_mcp():
-    try:
-        res = requests.post(MCP_URL)
-        res.raise_for_status()
-        return res.json().get("flow", [])
-    except Exception as e:
-        print(f"Error fetching flow: {e}")
-        return []
 
 
 @app.post("/api/analyze")
 async def analyze():
-    async with create_nodered_server() as nodered_server:
-        agent = create_auditor_agent(nodered_server)
-        result = await Runner.run(agent, input="Analyze the current Node-RED flow.")
-        return result.final_output
+    try:
+        async with create_nodered_server() as nodered_server:
+            agent = create_auditor_agent(nodered_server)
+            result = await Runner.run(agent, input="Analyze the current Node-RED flow.")
+            print("AI Raw Output:", result.final_output)
+
+            return result.final_output
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Audit failed: {str(e)}")
 
 
 if __name__ == "__main__":
