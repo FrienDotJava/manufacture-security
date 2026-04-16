@@ -75,8 +75,8 @@ OUTPUT RULES:
 - For `node_id`, use the exact `id` from the flow JSON (e.g., "8cefc7c46573306d").
 - Use "global" for issues that span the whole flow (e.g., missing watchdog timer).
 - Severity mapping:
-    ARCHITECTURAL_GAP (sensor dropout, no watchdog)      → "high",   CVSS 7.0–8.9
-    PASS_WITH_ARCHITECTURAL_GAP (no overflow alarm/range) → "medium", CVSS 4.0–6.9
+    ARCHITECTURAL_GAP (sensor dropout, no watchdog)      → "high",   CVSS 7.0-8.9
+    PASS_WITH_ARCHITECTURAL_GAP (no overflow alarm/range) → "medium", CVSS 4.0-6.9
     Active debug node in production                       → "low",    CVSS 0.0
 """
 

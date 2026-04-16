@@ -3,13 +3,29 @@ import time
 import logging
 from pymodbus.client import ModbusTcpClient
 import httpx
+from pathlib import Path
 
-logger = logging.getLogger("fault_injector")
+LOG_PATH = Path(__file__).with_name("injection.log")
+
+logger = logging.getLogger("fault_injection")
 logger.setLevel(logging.INFO)
+logger.propagate = False
+
 if not logger.handlers:
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
-    logger.addHandler(handler)
+    formatter = logging.Formatter(
+        "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+    )
+
+    file_handler = logging.FileHandler(LOG_PATH, encoding="utf-8")
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(formatter)
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.INFO)
+    stream_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+    logger.addHandler(stream_handler)
 
 MODBUS_HOST = "localhost"
 MODBUS_PORT = 10502
