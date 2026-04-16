@@ -138,7 +138,6 @@ def inject_simulation_data(level: int) -> dict:
     try:
         with httpx.Client(timeout=5.0) as client:
             response = client.post(url, json=payload)
-            # Node-RED returns 200 on success
             success = response.status_code == 200
             return {
                 "success": success,

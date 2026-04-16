@@ -49,7 +49,6 @@ async def analyze():
             
             analysis_prompt = get_analysis_prompt(flow=flow_json)
             
-            # Use pure Ollama chat with native Pydantic schema formatting
             response = await ollama_client.chat(
                 model=OLLAMA_MODEL,
                 messages=[
@@ -57,13 +56,12 @@ async def analyze():
                     {'role': 'user', 'content': analysis_prompt}
                 ],
                 format=SecurityReport.model_json_schema(),
-                options={"temperature": 0.0} # Recommended for strict structured outputs
+                options={"temperature": 0.0}
             )
             
             raw_output = response['message']['content']
             print("AI Raw Output:", raw_output)
 
-            # Validate and parse the JSON string back into the Pydantic model
             return SecurityReport.model_validate_json(raw_output)
             
     except Exception as e:
