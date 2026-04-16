@@ -1,18 +1,25 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from typing import Optional, List
-import requests
-from context import NODE_RED_AUDITOR_INSTRUCTIONS, get_analysis_prompt
-from openai import AsyncOpenAI
-from agents import Agent, Runner, OpenAIChatCompletionsModel, ModelSettings
+from typing import List
+from ollama import AsyncClient
+import json
+
+from context import (
+    NODE_RED_AUDITOR_INSTRUCTIONS, 
+    NODE_RED_FAULT_INJECTION_INSTRUCTIONS, 
+    get_analysis_prompt, 
+    get_fault_injection_prompt
+)
 from mcp_server import create_nodered_server
+from mcp_api import fetch_active_flow
+from fault_injector import run_all_fault_scenarios
 
 app = FastAPI(title="Node-RED Shadow Agent API")
 
-MCP_URL = "http://localhost:8001/tools/fetch_active_flow"
-OLLAMA_URL = "http://localhost:11434/api/chat"
+OLLAMA_HOST = "http://localhost:11434"
 OLLAMA_MODEL = 'deepseek-auditor'
 
+ollama_client = AsyncClient(host=OLLAMA_HOST)
 
 class SecurityIssue(BaseModel):
     title: str = Field(description="Brief title of the security vulnerability")
@@ -34,46 +41,70 @@ class SecurityReport(BaseModel):
     issues: List[SecurityIssue] = Field(description="List of identified security vulnerabilities")
 
 
-ollama_client = AsyncOpenAI(
-    base_url='http://localhost:11434/v1',
-    api_key="ollama"
-)
-
-local_model = OpenAIChatCompletionsModel(
-    model=OLLAMA_MODEL, 
-    openai_client=ollama_client
-)
-
-
-def create_auditor_agent(nodered_server) -> Agent:
-    return Agent(
-        name="Industrial Security Auditor",
-        instructions=NODE_RED_AUDITOR_INSTRUCTIONS,
-        model=local_model,
-        mcp_servers=[nodered_server],
-        output_type=SecurityReport,
-        model_settings=ModelSettings(
-            max_tokens=2048,
-            tool_choice="fetch_active_flow",
-            parallel_tool_calls=False
-        )
-    )
-
-
-@app.post("/api/analyze")
+@app.post("/api/analyze", response_model=SecurityReport)
 async def analyze():
     try:
         async with create_nodered_server() as nodered_server:
-            agent = create_auditor_agent(nodered_server)
-            result = await Runner.run(agent, input="Analyze the current Node-RED flow.")
-            print("AI Raw Output:", result.final_output)
+            flow_json = await fetch_active_flow() 
+            
+            analysis_prompt = get_analysis_prompt(flow=flow_json)
+            
+            # Use pure Ollama chat with native Pydantic schema formatting
+            response = await ollama_client.chat(
+                model=OLLAMA_MODEL,
+                messages=[
+                    {'role': 'system', 'content': NODE_RED_AUDITOR_INSTRUCTIONS},
+                    {'role': 'user', 'content': analysis_prompt}
+                ],
+                format=SecurityReport.model_json_schema(),
+                options={"temperature": 0.0} # Recommended for strict structured outputs
+            )
+            
+            raw_output = response['message']['content']
+            print("AI Raw Output:", raw_output)
 
-            return result.final_output
+            # Validate and parse the JSON string back into the Pydantic model
+            return SecurityReport.model_validate_json(raw_output)
+            
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Audit failed: {str(e)}")
 
+@app.post("/api/fault-inject", response_model=SecurityReport)
+async def fault_inject():
+    try:
+        flow_json = await fetch_active_flow()
+ 
+        print("Starting fault injection scenarios...")
+        test_results = await run_all_fault_scenarios()
+ 
+        for r in test_results:
+            print(f"  [{r['verdict']:35s}] {r['scenario_name']} "
+                  f"(level={r['injected_level']:>4}, pump={r['observed_pump_state_after']})")
+ 
+        fault_prompt = get_fault_injection_prompt(
+            flow=flow_json,
+            test_results=test_results,
+        )
+ 
+        response = await ollama_client.chat(
+            model=OLLAMA_MODEL,
+            messages=[
+                {'role': 'system', 'content': NODE_RED_FAULT_INJECTION_INSTRUCTIONS},
+                {'role': 'user', 'content': fault_prompt}
+            ],
+            format=SecurityReport.model_json_schema(),
+            options={"temperature": 0.0}
+        )
+ 
+        raw_output = response['message']['content']
+        print("AI Raw Output:", raw_output)
+        
+        return SecurityReport.model_validate_json(raw_output)
+ 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fault injection audit failed: {str(e)}")
+ 
 
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=8000)
