@@ -51,15 +51,15 @@ export default function Home() {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Cybersecurity Analyst</h1>
-          <p className="text-accent mt-2">Python code analysis tool for security assessment</p>
+          <h1 className="text-3xl font-bold text-foreground">Node-RED Security Analysis</h1>
+          <p className="text-accent mt-2">Professional Node-RED flow analysis tool for security analysis</p>
         </header>
         <button
           onClick={handleAnalyzeFlow}
           disabled={isAnalyzing}
-          className="bg-accent hover:bg-accent/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-medium"
+          className="mb-6 bg-accent hover:bg-accent/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-medium"
         >
-          {isAnalyzing ? 'Analyzing...' : 'Analyze code'}
+          {isAnalyzing ? 'Analyzing...' : 'Fetch and Analyze Flow'}
         </button>
         <div className="grid grid-rows-2 gap-6 h-[calc(100vh-200px)]">
           <AnalysisResults

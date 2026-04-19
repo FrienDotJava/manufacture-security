@@ -36,7 +36,7 @@ export default function AnalysisResults({
         
         {!analysisResults && !error && (
           <div className="bg-gray-50 rounded-lg border border-border p-4 text-sm text-accent text-center">
-            {isAnalyzing ? 'Analyzing code...' : 'Upload and analyze Python code to see security assessment results here.'}
+            {isAnalyzing ? 'Analyzing code...' : 'Upload and analyze Node-RED flow to see security assessment results here.'}
           </div>
         )}
         
