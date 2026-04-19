@@ -47,6 +47,32 @@ export default function Home() {
     }
   };
 
+  const handleInjectAnalyzeFlow = async () => {
+
+    setIsAnalyzing(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/fault-inject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const results: AnalysisResponse = await response.json();
+      setAnalysisResults(results);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred during analysis');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
@@ -57,11 +83,18 @@ export default function Home() {
         <button
           onClick={handleAnalyzeFlow}
           disabled={isAnalyzing}
-          className="mb-6 bg-accent hover:bg-accent/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-medium"
+          className="mb-6 mr-6 bg-accent hover:bg-accent/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-medium"
         >
           {isAnalyzing ? 'Analyzing...' : 'Fetch and Analyze Flow'}
         </button>
-        <div className="grid grid-rows-2 gap-6 h-[calc(100vh-200px)]">
+        <button
+          onClick={handleInjectAnalyzeFlow}
+          disabled={isAnalyzing}
+          className="mb-6 bg-accent hover:bg-accent/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-medium"
+        >
+          {isAnalyzing ? 'Analyzing...' : 'Inject Sensor Value and Analyze Flow'}
+        </button>
+        <div className="grid grid-rows-2 gap-6 h-fit">
           <AnalysisResults
             analysisResults={analysisResults}
             isAnalyzing={isAnalyzing}

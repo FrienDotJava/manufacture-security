@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List
 from ollama import AsyncClient
@@ -15,6 +16,20 @@ from mcp_api import fetch_active_flow
 from fault_injector import run_all_fault_scenarios
 
 app = FastAPI(title="Node-RED Shadow Agent API")
+
+cors_origins = [
+    "http://localhost:3000",  # Local development
+    "http://frontend:3000",  # Docker development
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 OLLAMA_HOST = "http://localhost:11434"
 OLLAMA_MODEL = 'deepseek-auditor'
