@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List
 from ollama import AsyncClient
+import ast
 import json
 
 from context import (
@@ -116,7 +117,19 @@ async def fault_inject():
  
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Fault injection audit failed: {str(e)}")
- 
+
+
+@app.get("/api/flow")
+async def get_flow():
+    try:
+        flow_raw = await fetch_active_flow()
+        if isinstance(flow_raw, str):
+            python_obj = ast.literal_eval(flow_raw)
+            flow_raw = python_obj
+        
+        return flow_raw
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch flow: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
