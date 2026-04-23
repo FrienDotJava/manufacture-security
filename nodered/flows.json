@@ -1,0 +1,248 @@
+[
+    {
+        "id": "34b0b0e733d74c67",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "f756e8fcd382fdff",
+        "type": "inject",
+        "z": "34b0b0e733d74c67",
+        "name": "Water Level Sensor",
+        "props": [
+            {
+                "p": "payload.payload",
+                "v": "25",
+                "vt": "num"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 450,
+        "y": 280,
+        "wires": [
+            [
+                "ea3e8ae083de1afa"
+            ]
+        ]
+    },
+    {
+        "id": "ea3e8ae083de1afa",
+        "type": "switch",
+        "z": "34b0b0e733d74c67",
+        "name": "",
+        "property": "payload.payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "lt",
+                "v": "30",
+                "vt": "num"
+            },
+            {
+                "t": "gte",
+                "v": "30",
+                "vt": "num"
+            }
+        ],
+        "checkall": "false",
+        "repair": false,
+        "outputs": 2,
+        "x": 650,
+        "y": 280,
+        "wires": [
+            [
+                "bdaa0ed4a4a53e83"
+            ],
+            [
+                "719a90bb41532081"
+            ]
+        ]
+    },
+    {
+        "id": "93b13d2a4c527cf0",
+        "type": "debug",
+        "z": "34b0b0e733d74c67",
+        "name": "Pump Status",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1330,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "073f8db5baecfae4",
+        "type": "modbus-server",
+        "z": "34b0b0e733d74c67",
+        "name": "",
+        "logEnabled": false,
+        "hostname": "0.0.0.0",
+        "serverPort": 10502,
+        "responseDelay": 100,
+        "delayUnit": "ms",
+        "coilsBufferSize": 10000,
+        "holdingBufferSize": 10000,
+        "inputBufferSize": 10000,
+        "discreteBufferSize": 10000,
+        "showErrors": false,
+        "showStatusActivities": false,
+        "x": 1120,
+        "y": 400,
+        "wires": [
+            [],
+            [],
+            [],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "4742c3ec9dfe2189",
+        "type": "modbus-write",
+        "z": "34b0b0e733d74c67",
+        "name": "Write Pump Status",
+        "showStatusActivities": true,
+        "showErrors": false,
+        "showWarnings": true,
+        "unitid": "1",
+        "dataType": "HoldingRegister",
+        "adr": "0",
+        "quantity": "1",
+        "server": "957d105d32b1bdea",
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayTime": "",
+        "x": 1090,
+        "y": 280,
+        "wires": [
+            [
+                "93b13d2a4c527cf0"
+            ],
+            []
+        ],
+        "outputLabels": [
+            "Pump On",
+            "Pump Off"
+        ]
+    },
+    {
+        "id": "bdaa0ed4a4a53e83",
+        "type": "function",
+        "z": "34b0b0e733d74c67",
+        "name": "Payload True",
+        "func": "msg.payload = 1;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 850,
+        "y": 260,
+        "wires": [
+            [
+                "4742c3ec9dfe2189"
+            ]
+        ]
+    },
+    {
+        "id": "719a90bb41532081",
+        "type": "function",
+        "z": "34b0b0e733d74c67",
+        "name": "Payload False",
+        "func": "msg.payload = 0;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 860,
+        "y": 320,
+        "wires": [
+            [
+                "4742c3ec9dfe2189"
+            ]
+        ]
+    },
+    {
+        "id": "5bffcf3b2146a6ac",
+        "type": "http in",
+        "z": "34b0b0e733d74c67",
+        "name": "",
+        "url": "/api/level",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 460,
+        "y": 400,
+        "wires": [
+            [
+                "ea3e8ae083de1afa",
+                "b62d2221c92a28db"
+            ]
+        ]
+    },
+    {
+        "id": "b62d2221c92a28db",
+        "type": "http response",
+        "z": "34b0b0e733d74c67",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 770,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "957d105d32b1bdea",
+        "type": "modbus-client",
+        "name": "",
+        "clienttype": "tcp",
+        "bufferCommands": true,
+        "stateLogEnabled": false,
+        "queueLogEnabled": false,
+        "failureLogEnabled": true,
+        "tcpHost": "127.0.0.1",
+        "tcpPort": "10502",
+        "tcpType": "DEFAULT",
+        "serialPort": "/dev/ttyUSB",
+        "serialType": "RTU-BUFFERD",
+        "serialBaudrate": 9600,
+        "serialDatabits": 8,
+        "serialStopbits": 1,
+        "serialParity": "none",
+        "serialConnectionDelay": 100,
+        "serialAsciiResponseStartDelimiter": "0x3A",
+        "unit_id": 1,
+        "commandDelay": 1,
+        "clientTimeout": 1000,
+        "reconnectOnTimeout": true,
+        "reconnectTimeout": 2000,
+        "parallelUnitIdsAllowed": true,
+        "showErrors": false,
+        "showWarnings": true,
+        "showLogs": true
+    },
+    {
+        "id": "c34bf83b8cc14c93",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-contrib-modbus": "5.45.2"
+        }
+    }
+]

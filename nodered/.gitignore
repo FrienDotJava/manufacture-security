@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+.npm/
+
+# Node-RED local configuration and state
+.config.nodes.json
+.config.runtime.json
+.config.users.json
+
+# Backup files
+*.backup
+.config.*.json.backup
+
+settings.js
+
+# Sensitive data
+.session.html

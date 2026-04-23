@@ -4,6 +4,7 @@ import logging
 from pymodbus.client import ModbusTcpClient
 import httpx
 from pathlib import Path
+import os
 
 LOG_PATH = Path(__file__).with_name("injection.log")
 
@@ -27,14 +28,15 @@ if not logger.handlers:
     logger.addHandler(file_handler)
     logger.addHandler(stream_handler)
 
-MODBUS_HOST = "localhost"
+MODBUS_HOST = os.getenv("MODBUS_HOST", "localhost")
 MODBUS_PORT = 10502
 DEVICE_ID = 1
 
 PUMP_STATUS_REGISTER = 0
 
-NODE_RED_BASE_URL = "http://localhost:1880"
-INJECT_NODE_ID = "b86de2ba1e793ad5"
+NODE_RED_BASE_URL = os.getenv("NODERED_URL", "http://localhost:1880")
+
+INJECT_NODE_ID = "f756e8fcd382fdff"
 
 OBSERVATION_DELAY_SECONDS = 2.0
 

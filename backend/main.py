@@ -5,6 +5,10 @@ from typing import List
 from ollama import AsyncClient
 import ast
 import json
+import os
+
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+NODERED_URL = os.getenv("NODERED_URL", "http://localhost:1880")
 
 from context import (
     NODE_RED_AUDITOR_INSTRUCTIONS, 
@@ -31,8 +35,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-OLLAMA_HOST = "http://localhost:11434"
 OLLAMA_MODEL = 'deepseek-auditor'
 
 ollama_client = AsyncClient(host=OLLAMA_HOST)
@@ -94,12 +96,12 @@ async def fault_inject():
         for r in test_results:
             print(f"  [{r['verdict']:35s}] {r['scenario_name']} "
                   f"(level={r['injected_level']:>4}, pump={r['observed_pump_state_after']})")
- 
+
         fault_prompt = get_fault_injection_prompt(
             flow=flow_json,
             test_results=test_results,
         )
- 
+
         response = await ollama_client.chat(
             model=OLLAMA_MODEL,
             messages=[
@@ -130,6 +132,12 @@ async def get_flow():
         return flow_raw
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch flow: {str(e)}")
+    
+
+@app.get("/health")
+async def health():
+    return {"message": "Node-RED Analyzer API"}
+
 
 if __name__ == "__main__":
     import uvicorn
