@@ -35,7 +35,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-OLLAMA_MODEL = 'deepseek-auditor'
+OLLAMA_MODEL = 'auditor-model'
 
 ollama_client = AsyncClient(host=OLLAMA_HOST)
 

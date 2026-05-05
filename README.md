@@ -16,7 +16,7 @@ Manufacturing systems often run on automation flows built with Node-RED, which c
 
 ## How the AI Agent Works
 
-The core of this project is an AI agent built on top of a locally running LLM (DeepSeek) served by Ollama. The agent is given two capabilities:
+The core of this project is an AI agent built on top of a locally running LLM (Llama 3) served by Ollama. The agent is given two capabilities:
 
 **Static Analysis**: The agent receives the raw Node-RED flow JSON and uses its understanding of industrial security patterns to identify issues such as hardcoded credentials, missing input validation, exposed HTTP endpoints, and active debug nodes in production.
 
@@ -53,7 +53,7 @@ All services run in Docker containers on the same local network. No data leaves 
 
 | Layer | Technology |
 |---|---|
-| AI Model | DeepSeek-Coder-V2 (via Ollama) |
+| AI Model | Llama 3.2 (via Ollama) |
 | Agent Framework | MCP (Model Context Protocol) with FastMCP |
 | Backend | FastAPI, Python |
 | Frontend | Next.js, TypeScript, Tailwind CSS |
@@ -129,13 +129,13 @@ docker compose up -d --build
 
 Pull the base model:
 ```bash
-docker compose exec ollama ollama pull deepseek-r1:8b
+docker compose exec ollama ollama pull llama3.2:3b
 ```
 
 Copy the Modelfile into the container and create the custom auditor model:
 ```bash
-docker compose cp ./ollama/Modelfile ollama:/Modelfile
-docker compose exec ollama ollama create deepseek-auditor -f /Modelfile
+docker compose cp ./ollama/Modelfile/Modelfile ollama:/Modelfile
+docker compose exec ollama ollama create auditor-model -f /Modelfile/Modelfile
 ```
 
 ### 4. Open the dashboard
